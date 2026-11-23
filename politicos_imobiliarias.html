@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-PT"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Políticos e imobiliárias</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#faf8f4;--fg:#1d1d1b;--mut:#6b6a66;--card:#fff;--line:#c9c5bb;--gov:#7a5cc4;--psd:#e8863a;--chega:#2b3a67;--cds:#1d8fcf;--ps:#d6455d;--co:#2a9d8f;--flag:#d62828}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17171a;--fg:#ececea;--mut:#9a9890;--card:#26262b;--line:#46464c;--gov:#a58bf0;--psd:#f09a52;--chega:#6f86d6;--cds:#4db3ec;--ps:#f0647a;--co:#3dbfae;--flag:#ff5a5a}}
+:root[data-theme="dark"]{--bg:#17171a;--fg:#ececea;--mut:#9a9890;--card:#26262b;--line:#46464c;--gov:#a58bf0;--psd:#f09a52;--chega:#6f86d6;--cds:#4db3ec;--ps:#f0647a;--co:#3dbfae;--flag:#ff5a5a}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);font:14px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;display:flex;flex-direction:column}
+header{padding:14px 18px 6px}
+h1{font-size:18px;margin:0 0 4px}
+.sub{color:var(--mut);font-size:12.5px;max-width:960px}
+.leg{display:flex;flex-wrap:wrap;gap:6px 16px;padding:6px 18px 10px;font-size:12px;color:var(--mut)}
+.leg i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+#wrap{flex:1;overflow:hidden;border-top:1px solid var(--line);min-height:0}
+svg{display:block;width:100%;height:100%;cursor:grab;touch-action:none}
+svg:active{cursor:grabbing}
+text{fill:var(--fg);pointer-events:none;font-size:11px}
+.lbl{font-weight:600}
+.link{stroke:var(--line);stroke-width:1.4;fill:none}
+circle.n{cursor:move;transition:opacity .15s}
+#tip{position:fixed;pointer-events:none;background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:10px;max-width:310px;box-shadow:0 4px 14px rgba(0,0,0,.18);opacity:0;transition:opacity .1s;z-index:9}
+#tip b{display:block;font-size:13.5px;margin-bottom:3px}
+#tip .k{color:var(--mut)}
+#tip .w{color:var(--flag);font-weight:600}
+</style></head><body>
+<header><h1>Políticos com participações em imobiliárias (PÚBLICO, 14 nov 2026)</h1>
+<div class="sub">Arrastar o fundo → mover · roda/pinça → zoom · arrastar uma bolha → arrasta as suas filhas com inércia (partido → políticos → empresas); duplo clique → repor posição. Tamanho da bolha = receitas de 2025 (sem dados = tamanho pequeno fixo). Passar o rato para ver detalhes. Só aparecem os políticos nomeados no artigo; o artigo contabiliza 40 no total. Partidos dos governantes: pesquisa fora do artigo (Rui Armindo Freitas: PSD desde 2005, segundo informação do utilizador, não verificada).</div></header>
+<div class="leg">
+<span><i style="background:var(--psd)"></i>PSD</span><span><i style="background:var(--chega)"></i>Chega</span><span><i style="background:var(--cds)"></i>CDS-PP</span><span><i style="background:var(--ps)"></i>PS</span>
+<span><i style="background:var(--co)"></i>Empresa</span><span><b style="color:#d62828">I</b> incompatibilidade</span><span><b style="color:#2f6fdb">C</b> contratos públicos</span><span><b style="color:#c99700">S</b> subsídios</span><span><b style="color:#8a4fbf">L</b> participação &gt;10% (limite legal em contratação pública)</span><span><i style="background:none;border:2px dashed var(--fg)"></i>Membro do Governo</span></div>
+<div id="wrap"><svg id="s"></svg></div>
+<div id="tip"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script>
+const P={gov:{n:"Governo",c:"--gov",t:"Governantes sem partido confirmado (o artigo contabiliza 9 ministros e secretários de Estado em separado dos 15 deputados do PSD)"},psd:{n:"PSD",c:"--psd",t:"15 deputados no artigo, mais governantes ligados ao PSD"},chega:{n:"Chega",c:"--chega",t:"5 deputados"},cds:{n:"CDS-PP",c:"--cds",t:"1 deputado"},ps:{n:"PS",c:"--ps",t:"9 deputados"}};
+const order=["psd","chega","cds","ps"];
+// pessoas: [nome, partido, cargo, membro do governo]
+const people=[
+["Rui Armindo Freitas","psd","Secretário de Estado Adjunto da Presidência e Imigração; presidente da Assembleia Municipal de Guimarães; empresário (têxtil/media). Militante do PSD desde 2005 (informação do utilizador; não confirmada em fontes públicas).",1],
+["João Moura","psd","Secretário de Estado da Agricultura (desde abril de 2024); presidente da Assembleia Municipal de Ourém desde outubro de 2017. PSD (ex-vice-presidente do grupo parlamentar, segundo a imprensa).",1],
+["João Silva Lopes","psd","Secretário de Estado do Tesouro e das Finanças. Ligado ao PSD (coordenador do Conselho Estratégico Nacional do PSD para o Ambiente; ex-SE do Orçamento com Passos Coelho). Filiação formal não confirmada.",1],
+["Francisco Covelinhas Lopes","psd","Deputado; foi diretor financeiro da Th1nk Mate até julho de 2026; membro da assembleia de freguesia 2017–2021",0],
+["Emídio Guerreiro","psd","Deputado",0],
+["Paulo Cavaleiro","psd","Deputado",0],
+["Paulo Lopes Marcelo","psd","Deputado; foi secretário de Estado da Presidência do Conselho de Ministros em 2024",0],
+["Andreia Neto","psd","Deputada; continua gerente da AMCO Recuperação e Gestão de Crédito",0],
+["José Dotti","chega","Deputado desde 2025",0],
+["Paulo Núncio","cds","Deputado",0],
+["Eduardo Pinheiro","ps","Deputado",0],
+["Hernâni Loureiro","ps","Deputado",0],
+["Pedro Vaz","ps","Deputado",0]];
+// empresas: [nome, dono, participação, receitas2025, atividade, detalhes, assinalada]
+const co=[
+["AMCO Intermediários de Crédito","Andreia Neto","26%",15500000,"Intermediação de crédito + compra e venda de imóveis","Resto do capital do marido (comunhão de adquiridos). Maior das 56 empresas em receitas.","L","—","—"],
+["AMCO Recuperação e Gestão de Crédito","Andreia Neto","50%",null,"Recuperação e gestão de crédito","Resto do capital do marido. Continua gerente; o Estatuto dos Deputados proíbe integrar órgãos sociais de sociedades de crédito/financeiras.","IL","—","—"],
+["Quadrado ao Metro","João Moura","50%",1500000,"Arquitetura e engenharia civil","Outros 50% da mulher. Titular preside à Assembleia Municipal de Ourém desde out 2017 e é SE desde abr 2024.","LCS","5 (ago 2017–jun 2023): câmaras de Ourém, Leiria, Sesimbra","10.318 € (2025)"],
+["Transolum","João Silva Lopes","n/d",1000000,"Ligada ao setor imobiliário","Receitas de cerca de 1 M€ (2025).","","—","—"],
+["Zafgest","Rui Armindo Freitas","n/d",847000,"Ligada ao setor imobiliário","Receitas de cerca de 847 mil € (2025).","","—","—"],
+["Th1nk Mate","Francisco Covelinhas Lopes","5%",null,"Consultoria + mediação imobiliária","Participação abaixo do limite de 10%/50 mil €. Titular foi diretor financeiro até jul 2026.","C","30 (2021–dez 2025): municípios e outras entidades","—"],
+["Portugal Agora 360","Francisco Covelinhas Lopes","50%",null,"Mediação imobiliária","Titular foi membro de assembleia de freguesia (out 2017–set 2021).","LC","4 (ago 2017–ago 2018): municípios","—"],
+["Sombras Viçosas","Emídio Guerreiro","15%",712000,"Agricultura + compra, venda e arrendamento de imóveis","","LS","—","131.478 € (2025)"],
+["Marta & Laura Construções","Paulo Cavaleiro","50%",null,"Construção","","LS","—","17.464 € (2025; ativos e equipamento básico)"],
+["Lidemar","Paulo Lopes Marcelo","98%",null,"Imobiliária","Subsídio recebido no ano em que o titular era secretário de Estado.","LS","—","1457 € (2024)"],
+["Astel","José Dotti","100%",null,"Comércio de equipamentos + compra para revenda e arrendamento de imóveis","Titular é deputado desde 2025.","LC","67 (2013–jun 2026), vários por ajuste direto","—"],
+["Marinhais","Paulo Núncio","16%",null,"Ligada ao setor imobiliário","Sem contas de 2025. Em 2023 o titular não exercia cargos políticos.","LS","—","202.938 € (2023)"],
+["Território XXI","Eduardo Pinheiro","100% (mulher)",null,"Consultoria de ordenamento do território","Detida pela mulher; o deputado nunca foi sócio nem exerceu cargo. Sem incompatibilidade, segundo o artigo.","CS","136 (2016–out 2026), incl. cartas municipais de habitação","5743 € (2025)"],
+["Nexaris","Hernâni Loureiro","4%",null,"Consultoria de gestão; projetos de habitação","Abaixo do limite legal.","C","2 (jan e out 2026): STCP, Transportes Metropolitanos de Lisboa","—"],
+["Shiftify","Pedro Vaz","5%",null,"Consultoria","Maior acionista: Duarte Cordeiro (ex-ministro). Titular entrou em jan 2026.","CS","2: Univ. Nova de Lisboa (2024), Ordem dos Advogados (2025)","3762 € (2025)"]];
+const fmt=v=>v==null?"n/d":v>=1e6?(v/1e6).toFixed(1).replace(".",",")+" M€":Math.round(v/1e3)+" mil €";
+const W=Math.max(1700,innerWidth*1.25),H=Math.max(560,innerHeight-190);
+const rs=d3.scaleSqrt().domain([0,15.5e6]).range([0,95]);
+const nodes=[],links=[];
+order.forEach(k=>nodes.push({id:"P"+k,t:"party",p:k,r:34,label:P[k].n}));
+people.forEach(a=>{nodes.push({id:a[0],t:"person",p:a[1],r:15,label:a[0],role:a[2],gov:a[3]});links.push({source:"P"+a[1],target:a[0]})});
+const pof=Object.fromEntries(people.map(a=>[a[0],a[1]]));
+co.forEach(c=>{nodes.push({id:c[0],t:"co",p:pof[c[1]],r:c[3]?Math.max(14,rs(c[3])):12,label:c[0],c});links.push({source:c[1],target:c[0],stake:c[2]})});
+const svg=d3.select("#s");
+const root=svg.append("g");
+const zoom=d3.zoom().scaleExtent([0.25,3]).on("zoom",e=>root.attr("transform",e.transform));
+svg.call(zoom).on("dblclick.zoom",null);
+svg.call(zoom.transform,d3.zoomIdentity.translate(10,0).scale(Math.min(1,(innerWidth-20)/W)));
+const lk=root.append("g").selectAll("line").data(links).join("line").attr("class","link");
+const g=root.append("g").selectAll("g").data(nodes).join("g");
+const flag=d=>d.t=="co"&&d.c[6], gv=d=>d.t=="person"&&d.gov;
+g.append("circle").attr("class","n").attr("r",d=>d.r)
+ .attr("fill",d=>d.t=="co"?"var(--co)":`var(${P[d.p].c})`)
+ .attr("fill-opacity",d=>d.t=="co"?.8:d.t=="party"?1:.9)
+ .attr("stroke",d=>gv(d)?"var(--fg)":"var(--bg)").attr("stroke-width",d=>gv(d)?2:1.5)
+ .attr("stroke-dasharray",d=>gv(d)?"4 3":null);
+g.append("text").attr("class","lbl").attr("text-anchor","middle").attr("dy",d=>d.t=="party"?"0.35em":d.r+12)
+ .style("fill",d=>d.t=="party"?"#fff":"var(--fg)").style("font-size",d=>d.t=="party"?"12px":"10.5px").text(d=>d.label);
+const BD={I:["I","#d62828","Incompatibilidade"],C:["C","#2f6fdb","Contratos públicos (ver datas)"],S:["S","#c99700","Subsídios públicos"],L:["L","#8a4fbf","Participação >10%"]};
+g.filter(d=>d.t=="co").each(function(d){const s=d3.select(this);[...d.c[6]].forEach((k,i)=>{const a=(-25-i*42)*Math.PI/180,b=s.append("g").attr("transform",`translate(${Math.cos(a)*d.r},${Math.sin(a)*d.r})`);b.append("circle").attr("r",7).attr("fill",BD[k][1]).attr("stroke","var(--bg)").attr("stroke-width",1.2);b.append("text").attr("text-anchor","middle").attr("dy","0.35em").style("fill","#fff").style("font-size","9px").style("font-weight","700").text(k)})});
+const tip=document.getElementById("tip");
+function html(d){
+ if(d.t=="party")return `<b>${P[d.p].n}</b><span class="k">${P[d.p].t}</span>`;
+ if(d.t=="person"){const cs=co.filter(c=>c[1]==d.id);return `<b>${d.id}</b><span class="k">${P[d.p].n}${d.gov?" · Governo":""}</span><br>${d.role}<br><span class="k">Empresas:</span> ${cs.map(c=>c[0]+" ("+c[2]+")").join("; ")}`}
+ const c=d.c;return `<b>${c[0]}</b><span class="k">Titular:</span> ${c[1]} · ${c[2]}<br><span class="k">Atividade:</span> ${c[4]}<br><span class="k">Receitas 2025:</span> ${fmt(c[3])}<br><span class="k">Contratos públicos:</span> ${c[7]}<br><span class="k">Subsídios:</span> ${c[8]}${c[5]?"<br>"+c[5]:""}${c[6]?`<br><span class="w">${[...c[6]].map(k=>BD[k][0]+" "+BD[k][2]).join(" · ")}</span>`:""}`}
+g.on("mousemove",(e,d)=>{tip.innerHTML=html(d);tip.style.opacity=1;tip.style.left=Math.min(e.clientX+14,innerWidth-330)+"px";tip.style.top=Math.max(8,Math.min(e.clientY+14,innerHeight-tip.offsetHeight-8))+"px";
+ const nb=new Set([d.id]);links.forEach(l=>{if(l.source.id==d.id)nb.add(l.target.id);if(l.target.id==d.id)nb.add(l.source.id)});
+ g.style("opacity",n=>nb.has(n.id)||n.t=="party"&&n.p==d.p?1:.18);lk.style("opacity",l=>l.source.id==d.id||l.target.id==d.id?1:.1)})
+ .on("mouseleave",()=>{tip.style.opacity=0;g.style("opacity",1);lk.style("opacity",1)});
+const wt={psd:9.8,chega:1.6,cds:1.6,ps:3.4},tot=d3.sum(Object.values(wt));
+let acc=60;const cols={};order.forEach(k=>{const w=wt[k]/tot*(W-120);cols[k]={x0:acc,w};acc+=w});
+order.forEach(k=>{const pn=nodes.find(n=>n.id=="P"+k);pn.ax=cols[k].x0+cols[k].w/2;pn.ay=60;
+ const pp=nodes.filter(n=>n.t=="person"&&n.p==k);pp.forEach((n,i)=>{n.ax=cols[k].x0+cols[k].w*(i+.5)/pp.length;n.ay=190+(i%2)*40})});
+people.forEach(a=>{const o=nodes.find(n=>n.id==a[0]);let y=o.ay+34;nodes.filter(n=>n.t=="co"&&n.c[1]==a[0]).forEach(n=>{n.ax=o.ax;n.ay=y+n.r;y+=2*n.r+30})});
+nodes.forEach(n=>{n.x=n.ax;n.y=n.ay});
+const byId=Object.fromEntries(nodes.map(n=>[n.id,n])),par={};
+links.forEach(l=>{l.source=byId[l.source];l.target=byId[l.target];par[l.target.id]=l.source});
+nodes.forEach(n=>{const p=par[n.id];if(p){n.ox=n.ox0=n.ax-p.ax;n.oy=n.oy0=n.ay-p.ay}else{n.ax0=n.ax;n.ay0=n.ay}});
+g.call(d3.drag()
+ .on("start",(e,d)=>{if(!e.active)sim.alphaTarget(.3).restart();d.fx=d.x;d.fy=d.y})
+ .on("drag",(e,d)=>{d.fx=e.x;d.fy=e.y})
+ .on("end",(e,d)=>{if(!e.active)sim.alphaTarget(0);d.fx=null;d.fy=null;const p=par[d.id];if(p){d.ox=d.x-p.x;d.oy=d.y-p.y}else{d.ax=d.x;d.ay=d.y}}))
+ .on("dblclick",(e,d)=>{const p=par[d.id];if(p){d.ox=d.ox0;d.oy=d.oy0}else{d.ax=d.ax0;d.ay=d.ay0}sim.alpha(.6).restart()});
+const sim=d3.forceSimulation(nodes).velocityDecay(.28)
+ .force("col",d3.forceCollide(d=>d.r+8).strength(.8))
+ .force("spring",()=>nodes.forEach(n=>{if(n.fx!=null)return;const p=par[n.id],tx=p?p.x+n.ox:n.ax,ty=p?p.y+n.oy:n.ay;n.vx+=(tx-n.x)*.07;n.vy+=(ty-n.y)*.07}))
+ .on("tick",()=>{
+ lk.attr("x1",d=>d.source.x).attr("y1",d=>d.source.y).attr("x2",d=>d.target.x).attr("y2",d=>d.target.y);
+ g.attr("transform",d=>`translate(${d.x},${d.y})`)});
+</script></body></html>
